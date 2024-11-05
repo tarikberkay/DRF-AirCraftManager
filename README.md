@@ -33,7 +33,7 @@ Not: Sol taraftaki veriler Mac kurulumu için sağ taraftaki veriler Windows kur
 Projeyi Kurma  
 
 ```bash
- git clone 
+ git clone https://github.com/tarikberkay/DRF-AirCraftManager.git
 ```
 
 Sanal Ortam Oluşturma
