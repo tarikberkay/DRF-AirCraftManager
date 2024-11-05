@@ -1,0 +1,13 @@
+{% extends "base/base.html" %}
+{% block content %}
+{% load static %}
+
+<div class="jumbotron text-center">
+    <h1>Hava Aracı Üretim Uygulaması</h1>
+    <p>Personel yönetimi, parça üretimi ve montaj işlemleri.</p>
+    <a href="{% url 'core:login' %}" class="btn btn-primary">Personel Girişi</a>
+</div>
+
+
+
+{% endblock content %}

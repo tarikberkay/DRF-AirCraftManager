@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  # PostgreSQL service
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: aircraft
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+
+  # Django application
+  web:
+    build: .
+    command: gunicorn --bind 0.0.0.0:8000 app.wsgi:application
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DJANGO_SETTINGS_MODULE=app.settings
+      - DB_NAME=aircraft
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres_pass
+      - DB_HOST=db
+      - DB_PORT=5432
+      - IS_DOCKER=True
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:

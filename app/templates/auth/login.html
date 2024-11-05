@@ -1,0 +1,69 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-4">
+        <h2>Personel Girişi</h2>
+        <form id="loginForm">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="email" class="form-label">E-posta</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Şifre</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Giriş Yap</button>
+        </form>
+        <div class="mt-3">
+            <p>Hesabın yoksa <a href="{% url 'core:register' %}">ÜYE OL</a></p>
+        </div>
+        <div id="errorMessages" class="text-danger d-none"></div>
+        <div id="successMessage" class="text-success d-none">Giriş başarılı! Yönlendiriliyorsunuz...</div>
+    </div>
+</div>
+
+<script>
+
+    const homeUrl = "{% url 'core:home' %}";
+
+    document.getElementById('loginForm').addEventListener('submit', async function(event) {
+        event.preventDefault(); // Formun varsayılan gönderimini engelle
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        const response = await fetch('/api/login/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Token ve kullanıcı bilgilerini saklama
+            localStorage.setItem('access_token', data.access);
+            localStorage.setItem('user_info', JSON.stringify(data)); // Kullanıcı bilgilerini saklayın
+
+            document.getElementById('successMessage').classList.remove('d-none');
+            document.getElementById('errorMessages').classList.add('d-none');
+
+            // 2 saniye sonra giriş sonrası yönlendirme
+            setTimeout(() => {
+                window.location.href = homeUrl; // Ana sayfaya yönlendir
+            }, 2000);
+        } else {
+            document.getElementById('successMessage').classList.add('d-none');
+            document.getElementById('errorMessages').textContent = data.detail || 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.';
+            document.getElementById('errorMessages').classList.remove('d-none');
+        }
+    });
+</script>
+
+{% endblock %}

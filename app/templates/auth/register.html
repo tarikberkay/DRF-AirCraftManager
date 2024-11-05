@@ -1,0 +1,132 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2>Personel Kayıt</h2>
+        <form id="registerForm">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="name" class="form-label">Ad Soyad</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">E-posta</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Şifre</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <div class="mb-3">
+                <label for="phone" class="form-label">Telefon</label>
+                <input type="text" class="form-control" id="phone" name="phone" required>
+            </div>
+            <div class="mb-3">
+                <label for="team" class="form-label">Takım Seçin</label>
+                <select class="form-select" id="team" name="team" required>
+                    <option value="">Bir takım seçin</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Kayıt Ol</button>
+            <div id="errorMessages" class="alert alert-danger mt-3 d-none"></div>
+            <div id="successMessage" class="alert alert-success mt-3 d-none">Kayıt başarılı!</div>
+        </form>
+        <div class="mt-3">
+            <p>Zaten üye isen <a href="{% url 'core:login' %}">GİRİŞ YAP</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Takımları API'den çekip dropdown'a ekleme
+    async function loadTeams() {
+        try {
+            const response = await fetch('/api/team/');
+            if (response.ok) {
+                const teams = await response.json();
+                const teamSelect = document.getElementById('team');
+
+                teams.forEach(team => {
+                    const option = document.createElement('option');
+                    option.value = team.id;
+                    option.textContent = team.name;
+                    teamSelect.appendChild(option);
+                });
+            } else {
+                console.error("Takım verileri alınamadı:", response.statusText);
+            }
+        } catch (error) {
+            console.error("Bir hata oluştu:", error);
+        }
+    }
+
+    // Sayfa yüklendiğinde takımları yükle
+    document.addEventListener('DOMContentLoaded', loadTeams);
+
+    // Form gönderimi işlemleri
+    document.getElementById('registerForm').addEventListener('submit', async function (event) {
+        event.preventDefault();  // Formun varsayılan gönderimini engelle
+
+        // Form verilerini al
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const phone = document.getElementById('phone').value;
+        const team = document.getElementById('team').value;
+
+        // Veriyi JSON formatında hazırlayın
+        const data = {
+            name: name,
+            email: email,
+            password: password,
+            phone: phone,
+            is_personel: true,  // Formdan true olarak sabit göndereceğiz
+            team: team ? parseInt(team) : null  // Team ID’sini integer olarak göndereceğiz
+        };
+
+        try {
+            // Fetch API ile POST isteği gönder
+            const response = await fetch("/api/register/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            // Yanıt başarılıysa başarı mesajı göster
+            if (response.ok) {
+                document.getElementById('successMessage').classList.remove('d-none');
+                document.getElementById('errorMessages').classList.add('d-none');
+
+                 // 2 saniye sonra giriş sayfasına yönlendir
+                setTimeout(() => {
+                    window.location.href = "/login/"; // Giriş sayfasının URL'sini burada belirtin
+                }, 2000);
+
+            } else {
+                // Hataları listele ve kullanıcıya göster
+                document.getElementById('errorMessages').innerHTML = '';
+                for (const [field, messages] of Object.entries(result)) {
+                    messages.forEach(message => {
+                        document.getElementById('errorMessages').innerHTML += `<li>${message}</li>`;
+                    });
+                }
+                document.getElementById('errorMessages').classList.remove('d-none');
+                document.getElementById('successMessage').classList.add('d-none');
+            }
+
+        } catch (error) {
+            console.error("Bir hata oluştu:", error);
+            document.getElementById('errorMessages').innerHTML = "Kayıt sırasında bir hata oluştu.";
+            document.getElementById('errorMessages').classList.remove('d-none');
+        }
+    });
+</script>
+
+{% endblock %}
